@@ -1,135 +1,20 @@
 import F from "./functional";
+import { Wrapper } from "./wrapper";
+import {
+  symbolOfSelect,
+  SelectOfFields,
+  mapSelectOfFieldsOperation,
+} from "./select";
+import {
+  symbolOfWhere,
+  WhereOfKey,
+  WhereOfInput,
+  mapWhereOfKeyOperation,
+  mapWhereOfInputOperation,
+} from "./where";
+import { OrderBy, mapOrderByOperation } from "./orderBy";
 
-// handle the table like SQL
-
-type ITable = Record<string, any>[];
-
-class Wrapper<T> {
-  static of<T>(value: T) {
-    return new Wrapper(value);
-  }
-  constructor(public value: T) {}
-}
-
-function mapWrapper<P extends { initValue: any }>(option: P) {
-  return Wrapper.of(option.initValue);
-}
-
-// where
-const symbolOfWhere = Symbol("where");
-const where = (fn: (row: Record<string, any>) => boolean) => {
-  const tunnel = (data: ITable) => data.filter(fn);
-  tunnel.type = symbolOfWhere;
-  tunnel.cb = fn;
-  return tunnel;
-};
-
-const filterByKey = <T extends Record<string, any>>(
-  selected: string[],
-  key: keyof T & string,
-  row: T
-) => {
-  return (
-    !selected.length || selected.find((name) => name === row[key]) !== undefined
-  );
-};
-
-export const whereOfKey =
-  <T extends Record<string, any>>(key: keyof T & string) =>
-  (wrapper: Wrapper<string[]>) =>
-    where(F.partial(F.reactive(filterByKey, wrapper), key));
-
-interface WhereOfKey {
-  initValue: string[];
-  key: string;
-}
-
-function mapWhereOfKeyOperation(option: WhereOfKey) {
-  const wrapper = mapWrapper(option);
-  const operation = whereOfKey(option.key)(wrapper);
-  return {
-    wrapper,
-    operation,
-  };
-}
-
-const filterByInput = <T extends Record<string, any>>(
-  input: string,
-  keys: (keyof T & string)[],
-  row: T
-) => {
-  return !!keys.find((key: keyof T) => row[key].includes(input));
-};
-
-const whereOfInput =
-  <T extends Record<string, any>>(keys: (keyof T & string)[]) =>
-  (wrapper: Wrapper<string>) =>
-    where(F.partial(F.reactive(filterByInput, wrapper), keys));
-
-interface WhereOfInput {
-  initValue: string;
-  keys: string[];
-}
-
-function mapWhereOfInputOperation(option: WhereOfInput) {
-  const wrapper = mapWrapper(option);
-  const operation = whereOfInput(option.keys)(wrapper);
-  return {
-    wrapper,
-    operation,
-  };
-}
-
-// select
-const symbolOfSelect = Symbol("select");
-const select = (fn: (row: Record<string, any>) => Record<string, any>) => {
-  const tunnel = (data: ITable) => data.map(fn);
-  tunnel.type = symbolOfSelect;
-  tunnel.cb = fn;
-  return tunnel;
-};
-
-const selectRow = (fields: string[], row: Record<string, any>) => {
-  const obj: Record<string, any> = F.clone(row);
-  fields.forEach((field) => Reflect.deleteProperty(obj, field));
-  return obj;
-};
-const selectOfFields = (wrapper: Wrapper<string[]>) =>
-  select(F.reactive(selectRow, wrapper));
-interface SelectOfFields {
-  initValue: string[];
-}
-
-function mapSelectOfFieldsOperation(option: SelectOfFields) {
-  const wrapper = mapWrapper(option);
-  const operation = selectOfFields(wrapper);
-  return {
-    wrapper,
-    operation,
-  };
-}
-
-// orderby
-const orderby = (
-  fn: (row1: Record<string, any>, row2: Record<string, any>) => boolean,
-  data: ITable
-) => F.sort(fn)(data);
-
-export const orderbyOfCompare = (
-  wrapper: Wrapper<(a: any, b: any) => boolean>
-) => F.reactive(orderby, wrapper);
-interface OrderBy {
-  initValue: (a: any, b: any) => boolean;
-}
-
-function mapOrderByOperation(option: OrderBy) {
-  const wrapper = mapWrapper(option);
-  const operation = orderbyOfCompare(wrapper);
-  return {
-    wrapper,
-    operation,
-  };
-}
+export type ITable = Record<string, any>[];
 
 /**
  * two optimization points:
@@ -140,7 +25,9 @@ function optimizeOpreations(
   opreations: ((table: ITable) => ITable)[]
 ): ((table: ITable) => ITable)[] {
   const selects: ((row: Record<string, any>) => Record<string, any>)[] = [];
+
   const wheres: ((row: Record<string, any>) => boolean)[] = [];
+
   const rest = opreations.filter((operation: any) => {
     if (operation.type && operation.type === symbolOfSelect) {
       selects.push(operation.cb);
@@ -152,10 +39,13 @@ function optimizeOpreations(
       return true;
     }
   });
+
   const newSelect = (data: ITable): ITable =>
     data.map(F.compose(...(selects as any)));
+
   const newWhere = (data: ITable): ITable =>
     data.filter((row) => wheres.every((where) => where(row)));
+
   return [newSelect, newWhere, ...rest];
 }
 
@@ -233,6 +123,7 @@ export function createTableHandler<
         },
         []
       );
+      // tip: something went wrong when use Proxy in Vue2.x
       // use Proxy to make user use `hander[type][prop] = *` instead of use `hander[type][prop].value = *`
       // proxyProps[key] = new Proxy(props[key], {
       //   get(target: { [key: string]: Wrapper<any> }, p: string) {
