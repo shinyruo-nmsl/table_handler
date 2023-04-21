@@ -1,0 +1,22 @@
+{
+  "name": "table_handler",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/shinyruo-nmsl/table_handler.git"
+  },
+  "author": "jim",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shinyruo-nmsl/table_handler/issues"
+  },
+  "homepage": "https://github.com/shinyruo-nmsl/table_handler#readme",
+  "dependencies": {
+    "typescript": "^5.0.4"
+  }
+}
