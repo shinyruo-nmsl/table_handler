@@ -9,15 +9,6 @@ const data = [
   { name: 'baa', age: 22, gender: 'F', height: 176, weight: '77kg', type: 'adult' },
 ]
 
-const data2 = [
-  { name: 'bridge', age: 2, gender: 'M', height: 100, weight: '16kg', type: 'junior' },
-  { name: 'bar', age: 11, gender: 'F', height: 110, weight: '33kg', type: 'junior' },
-  { name: 'baa', age: 22, gender: 'F', height: 176, weight: '77kg', type: 'adult' },
-  { name: 'foo', age: 23, gender: 'M', height: 102, weight: '13kg', type: 'adult' },
-  { name: 'jim', age: 29, gender: 'M', height: 180, weight: '88kg', type: 'adult' },
-  { name: 'viven', age: 30, gender: 'F', height: 163, weight: '60kg', type: 'adult' },
-]
-
 const handler = createTableHandler(data, {
   select: {
     column: {
