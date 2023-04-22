@@ -1,7 +1,7 @@
 import F from './functional'
 import { Wrapper, liftWrapper } from './wrapper'
 import { symbolOfSelect, selectOfFields } from './select'
-import { whereOfKey, symbolOfWhere, WhereOfInput, mapWhereOfInputOperation } from './where'
+import { whereOfKey, symbolOfWhere, whereOfInput } from './where'
 import { orderbyOfCompare } from './orderBy'
 
 export type ITable = Record<string, any>[]
@@ -14,6 +14,20 @@ export interface WhereOfKey {
 export function mapWhereOfKeyOperation(option: WhereOfKey) {
   const wrapper = liftWrapper(option.initValue)
   const operation = whereOfKey(option.key)(wrapper)
+  return {
+    wrapper,
+    operation,
+  }
+}
+
+export interface WhereOfInput {
+  initValue: string
+  keys: string[]
+}
+
+export function mapWhereOfInputOperation(option: WhereOfInput) {
+  const wrapper = liftWrapper(option.initValue)
+  const operation = whereOfInput(option.keys)(wrapper)
   return {
     wrapper,
     operation,
@@ -77,6 +91,7 @@ function optimizeOpreations(opreations: ((table: ITable) => ITable)[]): ((table:
 
 class QueryStrategy {
   constructor(public data: ITable, public opreations: ((table: ITable) => ITable)[]) {}
+
   excute(): ITable | Error {
     if (this.opreations.length > 0) {
       return F.compose(...(this.opreations as any))(this.data)

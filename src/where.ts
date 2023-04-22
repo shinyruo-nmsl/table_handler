@@ -24,21 +24,7 @@ const filterByInput = <T extends Record<string, any>>(input: string, keys: (keyo
   return !!keys.find((key: keyof T) => row[key].includes(input))
 }
 
-const whereOfInput =
+export const whereOfInput =
   <T extends Record<string, any>>(keys: (keyof T & string)[]) =>
   (wrapper: Wrapper<string>) =>
     where(F.partial(F.reactive(filterByInput, wrapper), keys))
-
-export interface WhereOfInput {
-  initValue: string
-  keys: string[]
-}
-
-export function mapWhereOfInputOperation(option: WhereOfInput) {
-  const wrapper = liftWrapper(option.initValue)
-  const operation = whereOfInput(option.keys)(wrapper)
-  return {
-    wrapper,
-    operation,
-  }
-}
