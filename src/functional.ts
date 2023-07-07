@@ -8,15 +8,17 @@ type Idx<T, K> = K extends keyof T ? T[K] : never
 
 type Reverse<T extends any[]> = T['length'] extends 0 ? [] : [...Reverse<Rest<T>>, First<T>]
 
-function curry<T extends (...args: any[]) => any>(fn: T) {
+type Curry<A, R> = A extends [] ? () => R : A extends [infer B] ? (arg: B) => R : A extends [infer C, ...infer Rest] ? (arg: C) => Curry<Rest, R> : never
+
+function curry<A extends any[], R>(fn: (...args: A) => R): Curry<A, R> {
   return function recur(...args1: any[]) {
     if (args1.length >= fn.length) {
-      return fn(...args1)
+      return fn(...(args1 as any))
     }
     return function (...args2: any[]) {
       return recur.apply(null, [...args1, ...args2])
     }
-  }
+  } as any
 }
 
 function partial<P1 extends any[], P2 extends any[], T extends (...args: [...P1, ...P2]) => any>(fn: T, ...args: P1) {
